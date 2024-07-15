@@ -4,3 +4,5 @@ includes/OISPrereqs.h
 
 
 *.TMP
+.idea/*
+cmake-build-debug/*

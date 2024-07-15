@@ -29,6 +29,7 @@ following restrictions:
 #include "OISObject.h"
 
 #include <iostream>
+#include <string>
 using namespace std;
 
 using namespace OIS;
@@ -101,6 +102,22 @@ int getInt32(CFNumberRef ref)
 		CFNumberGetValue(ref, kCFNumberIntType, &r);
 	return r;
 }
+
+//------------------------------------------------------------------------------------------------------//
+void getString(std::string &destStr, CFStringRef cfStrRef) {
+	// std::string can't contain anything besides 8-bit chars
+	const char *c = CFStringGetCStringPtr(cfStrRef, kCFStringEncodingASCII);
+	if (c) {
+		destStr = std::string(c);
+	} else {
+		constexpr int kBufLen = 512;
+		char buf[kBufLen]; // TODO not sure how long to make this
+		bzero(buf, kBufLen);
+		CFStringGetCString(cfStrRef, buf, kBufLen, kCFStringEncodingASCII);
+		destStr = std::string(buf);
+	}
+}
+
 
 //--------------------------------------------------------------------------------//
 MacHIDManager::MacHIDManager()
@@ -216,12 +233,16 @@ HidInfo* MacHIDManager::enumerateDeviceProperties(CFMutableDictionaryRef propert
 	info->type = OISJoyStick;
 
 	CFStringRef str = getDictionaryItemAsRef<CFStringRef>(propertyMap, kIOHIDManufacturerKey);
-	if(str)
-		info->vendor = CFStringGetCStringPtr(str, CFStringGetSystemEncoding());
+	if(str) {
+		getString(info->vendor, str);
+		//info->vendor = CFStringGetCStringPtr(str, CFStringGetSystemEncoding());
+	}
 
 	str = getDictionaryItemAsRef<CFStringRef>(propertyMap, kIOHIDProductKey);
-	if(str)
-		info->productKey = CFStringGetCStringPtr(str, CFStringGetSystemEncoding());
+	if(str) {
+		getString(info->productKey, str);
+		//info->productKey = CFStringGetCStringPtr(str, CFStringGetSystemEncoding());
+	}
 
 	info->combinedKey = info->vendor + " " + info->productKey;
 
